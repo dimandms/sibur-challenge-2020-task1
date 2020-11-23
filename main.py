@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 from constants import FEATURE_COLUMNS
 
 from load_data import load_data
@@ -18,6 +20,8 @@ def main():
         y_preds.append(y_pred)
         plot_fitted_values(model.best_estimator_,
                            X_train[FEATURE_COLUMNS], y_train[target], target)
+    
+    plt.show()
 
     sub = create_submission(X_test["timestamp"], y_preds)
     sub.to_csv(f'submission.csv', index=False)
