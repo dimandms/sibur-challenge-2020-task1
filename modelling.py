@@ -17,7 +17,8 @@ def train_regression(X_train, y_train):
     ])
 
     params_grid = {
-        "regressor__alpha": np.logspace(-8, 3, num=12, base=10),
+        # "regressor__alpha": np.logspace(-8, 3, num=12, base=10),
+        "regressor__alpha": np.logspace(-8, 5, num=14, base=10),
         "regressor__fit_intercept": [True, False],
     }
 
