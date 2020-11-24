@@ -11,6 +11,31 @@ import matplotlib.pyplot as plt
 from constants import TARGET_COLUMNS, FEATURE_COLUMNS
 
 
+def train_regression(X_train, y_train):
+    model_pipline = Pipeline([
+        ("regressor", Ridge())
+    ])
+
+    params_grid = {
+        "regressor__alpha": np.logspace(-8, 3, num=12, base=10),
+        "regressor__fit_intercept": [True, False],
+    }
+
+    model = GridSearchCV(model_pipline,
+                         params_grid,
+                         scoring=make_scorer(r2_score),
+                         n_jobs=-1,
+                         cv=10,
+                         verbose=1,
+                         refit=True,
+                         return_train_score=True
+                         )
+
+    model.fit(X_train, y_train)
+
+    return model
+
+
 def evaluate_training(X_train, y_train, verbose=False, show_fit_plots=False):
     models = []
     for target in TARGET_COLUMNS:
