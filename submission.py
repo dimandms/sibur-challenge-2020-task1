@@ -2,7 +2,7 @@ from matplotlib.pyplot import axis
 import numpy as np
 import pandas as pd
 
-from constants import FEATURE_COLUMNS, TARGET_COLUMNS
+from constants import TARGET_COLUMNS
 
 
 def create_submission(timestamps, y_preds):

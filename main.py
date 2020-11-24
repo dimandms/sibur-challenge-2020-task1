@@ -5,23 +5,20 @@ from constants import FEATURE_COLUMNS
 from load_data import load_data
 from nan_processsing import process_na
 from modelling import evaluate_training
-from plotting import plot_fitted_values
 from submission import create_submission
 
 
 def main():
     data = load_data()
     X_train, y_train, X_test = process_na(data)
-    models = evaluate_training(X_train, y_train)
+    models = evaluate_training(
+        X_train, y_train, verbose=True, show_fit_plots=True)
+    plt.show()
 
     y_preds = []
-    for target, model in models.items():
+    for _, model in models.items():
         y_pred = model.predict(X_test[FEATURE_COLUMNS])
         y_preds.append(y_pred)
-        plot_fitted_values(model.best_estimator_,
-                           X_train[FEATURE_COLUMNS], y_train[target], target)
-    
-    plt.show()
 
     sub = create_submission(X_test["timestamp"], y_preds)
     sub.to_csv(f'submission.csv', index=False)
@@ -29,3 +26,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+"""1. Сделать преобразование в т/с и отбросить общие расходы. Потом восстанавливать проценты
+2. Ridge тренировать на r2
+3. Сделать полиномальные фичи
+4. Бустинг
+5. Своя стратегия cv
+6. Зафиксировать random seed"""
