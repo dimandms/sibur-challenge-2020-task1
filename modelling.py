@@ -8,7 +8,20 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import lightgbm as lgb
+
 from constants import TARGET_COLUMNS, FEATURE_COLUMNS
+
+
+def train_gbm(X_train, y_train):
+    gbm_regressor = lgb.LGBMRegressor(num_leaves=31,
+                                      learning_rate=0.05,
+                                      n_estimators=20)
+
+    gbm_regressor.fit(X_train, y_train,
+                      early_stopping_rounds=5)
+
+    return gbm_regressor
 
 
 def train_regression(X_train, y_train):
@@ -18,7 +31,7 @@ def train_regression(X_train, y_train):
 
     params_grid = {
         # "regressor__alpha": np.logspace(-8, 3, num=12, base=10),
-        "regressor__alpha": np.logspace(-8, 5, num=14, base=10),
+        "regressor__alpha": np.logspace(-8, 8, num=17, base=10),
         "regressor__fit_intercept": [True, False],
     }
 
@@ -26,7 +39,7 @@ def train_regression(X_train, y_train):
                          params_grid,
                          scoring=make_scorer(r2_score),
                          n_jobs=-1,
-                         cv=10,
+                         cv=5,
                          verbose=1,
                          refit=True,
                          return_train_score=True
