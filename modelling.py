@@ -59,13 +59,13 @@ def train_rf_regression(X_train, y_train):
 
 def train_regression(X_train, y_train):
     model_pipline = Pipeline([
-        ("regressor", Lasso())
+        ("regressor", Ridge())
     ])
 
     params_grid = {
         # "regressor__alpha": np.logspace(-8, 3, num=12, base=10),
         "regressor__alpha": np.logspace(-8, 8, num=17, base=10),
-        "regressor__fit_intercept": [True, False],
+        "regressor__fit_intercept": [False],
     }
 
     model = GridSearchCV(model_pipline,
