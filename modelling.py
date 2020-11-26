@@ -1,7 +1,8 @@
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, Lasso
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import make_scorer, r2_score
 from metrics import mean_absolute_percentage_error, absolute_errors
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline, make_pipeline
 
 import numpy as np
@@ -13,20 +14,52 @@ import lightgbm as lgb
 from constants import TARGET_COLUMNS, FEATURE_COLUMNS
 
 
-def train_gbm(X_train, y_train):
-    gbm_regressor = lgb.LGBMRegressor(num_leaves=31,
-                                      learning_rate=0.05,
-                                      n_estimators=20)
+def train_rf_regression(X_train, y_train):
+    # Number of trees in random forest
+    n_estimators = [int(x) for x in np.linspace(start=10, stop=500, num=10)]
+    # Number of features to consider at every split
+    max_features = ['auto', 'sqrt']
+    # Maximum number of levels in tree
+    max_depth = [int(x) for x in np.linspace(10, 110, num=11)]
+    max_depth.append(None)
+    # Minimum number of samples required to split a node
+    min_samples_split = [2, 5, 10]
+    # Minimum number of samples required at each leaf node
+    min_samples_leaf = [1, 2, 4]
+    # Method of selecting samples for training each tree
+    bootstrap = [True, False]
+    # Create the random grid
+    params_grid = {'regressor__n_estimators': n_estimators,
+                   'regressor__max_features': max_features,
+                   'regressor__max_depth': max_depth,
+                   'regressor__min_samples_split': min_samples_split,
+                   'regressor__min_samples_leaf': min_samples_leaf,
+                   'regressor__bootstrap': bootstrap}
 
-    gbm_regressor.fit(X_train, y_train,
-                      early_stopping_rounds=5)
+    model_pipline = Pipeline([
+        ("regressor", RandomForestRegressor())
+    ])
 
-    return gbm_regressor
+    model = RandomizedSearchCV(model_pipline,
+                               params_grid,
+                               scoring=make_scorer(
+                                   mean_absolute_percentage_error),
+                               n_jobs=-1,
+                               cv=5,
+                               verbose=1,
+                               refit=True,
+                               random_state=42,
+                               return_train_score=True
+                               )
+
+    model.fit(X_train, y_train)
+
+    return model
 
 
 def train_regression(X_train, y_train):
     model_pipline = Pipeline([
-        ("regressor", Ridge())
+        ("regressor", Lasso())
     ])
 
     params_grid = {
