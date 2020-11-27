@@ -22,7 +22,7 @@ def main():
                100 for pred in predict(models, X_test[FEATURE_GASES_MASS])]
 
     sub = create_submission(test_features["timestamp"], y_preds)
-    plot_submition(sub)
+    # plot_submition(sub)
 
     sub.to_csv(f'submission.csv', index=False)
 

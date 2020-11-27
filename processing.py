@@ -94,7 +94,7 @@ def smooth_test_df(data):
     X_test_smoothed = X_test.copy()
 
     WINDOW_SIZE = 30
-    OUT_PERCENT = 10
+    OUT_PERCENT = 5
     for gas in FEATURE_GASES_MASS:
         X_test_smoothed[gas] = X_test_smoothed[gas].rolling(
             WINDOW_SIZE, min_periods=1).apply(lambda x: smooth_window_func(x, OUT_PERCENT))

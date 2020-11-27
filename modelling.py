@@ -9,6 +9,9 @@ from sklearn.metrics import make_scorer
 from metrics import mean_absolute_percentage_error, absolute_errors
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
+from sklearn.model_selection import KFold
+
+from xgboost import XGBRegressor
 
 import numpy as np
 import pandas as pd
@@ -20,17 +23,28 @@ from constants import TARGET_COLUMNS_MASS
 def train_regression(X_train, y_train):
     model_pipline = Pipeline([
         # ("scaler", StandardScaler()),
-        # ("polynomal", PolynomialFeatures()),
+        ("polynomal", PolynomialFeatures(degree=3)),
         # ("selection", SelectKBest(f_regression)),
         # ('ann', MLPRegressor(max_iter=500, batch_size=2000))
-        ("regressor", ElasticNet())
+        # ("regressor", ElasticNet())
+        ("booster", XGBRegressor())
     ])
 
     params_grid = {
-        "regressor__alpha": np.logspace(-8, 8, num=17, base=10),
-        "regressor__l1_ratio": [0, 0.25, 0.5, 0.75, 1],
-        "regressor__fit_intercept": [True],
+        'booster__objective': ['reg:squarederror'],
+        'booster__learning_rate': [0.05],  # so called `eta` value
+        'booster__max_depth': [5],
+        'booster__min_child_weight': [4],
+        'booster__subsample': [0.7],
+        'booster__colsample_bytree': [0.7],
+        'booster__n_estimators': [500]
     }
+
+    # params_grid = {
+    #     "regressor__alpha": np.logspace(-8, 8, num=17, base=10),
+    #     "regressor__l1_ratio": [0, 0.25, 0.5, 0.75, 1],
+    #     "regressor__fit_intercept": [True],
+    # }
 
     # params_grid = {
     #     # "ann__alpha": [1e-3]
@@ -44,7 +58,7 @@ def train_regression(X_train, y_train):
                          scoring=make_scorer(
                              mean_absolute_percentage_error, greater_is_better=False),
                          n_jobs=-1,
-                         cv=5,
+                         cv=KFold(n_splits=10, shuffle=True, random_state=42),
                          refit=True,
                          return_train_score=True
                          )
