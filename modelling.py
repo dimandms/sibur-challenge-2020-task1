@@ -5,7 +5,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import PowerTransformer
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import make_scorer,
+from sklearn.metrics import make_scorer
 from metrics import mean_absolute_percentage_error, absolute_errors
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
@@ -50,7 +50,7 @@ def train_regression(X_train, y_train):
                          )
 
     model.fit(X_train, y_train)
-    show_model_results(model)
+    # show_model_results(model)
 
     return model
 
@@ -80,8 +80,7 @@ def show_model_results(model):
           )
 
 
-def plot_fitted_values(estimator, X, y_true, title):
-    y_pred = estimator.predict(X)
+def plot_fitted_values(y_pred, y_true, title):
     _, ax = plt.subplots(1, 1, figsize=(15, 3))
 
     ax.plot(y_true, label="true")
