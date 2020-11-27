@@ -1,27 +1,29 @@
 import matplotlib.pyplot as plt
 
-from constants import FEATURE_COLUMNS
+from constants import FEATURE_GASES_MASS
 
 from load_data import load_data
-from processing import process
+from processing import process, smooth_series
 from modelling import evaluate_training
 from submission import create_submission
+from evaluate import predict
 
 
 def main():
-    data = load_data()
-    X_train, y_train, X_test = process(data)
+    train_features, train_targets, test_features = load_data()
 
-    models = evaluate_training(
-        X_train, y_train, verbose=True, show_fit_plots=True)
-    plt.show()
+    X_train, y_train, X_test = process(
+        (train_features, train_targets, test_features))
 
-    y_preds = []
-    for _, model in models.items():
-        y_pred = model.predict(X_test[FEATURE_COLUMNS])
-        y_preds.append(y_pred)
+    test_B_rate_smoothed = smooth_series(test_features['B_rate']).values
 
-    sub = create_submission(X_test["timestamp"], y_preds)
+    models = evaluate_training(X_train[FEATURE_GASES_MASS], y_train)
+
+    y_preds = [pred/test_B_rate_smoothed *
+               100 for pred in predict(models, X_test[FEATURE_GASES_MASS])]
+
+    sub = create_submission(test_features["timestamp"], y_preds)
+
     sub.to_csv(f'submission.csv', index=False)
 
 

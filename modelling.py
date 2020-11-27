@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 import lightgbm as lgb
 
-from constants import TARGET_COLUMNS, FEATURE_COLUMNS
+from constants import TARGET_COLUMNS, FEATURE_COLUMNS, TARGET_COLUMNS_MASS
 
 
 def train_rf_regression(X_train, y_train):
@@ -83,48 +83,13 @@ def train_regression(X_train, y_train):
     return model
 
 
-def evaluate_training(X_train, y_train, verbose=False, show_fit_plots=False):
+def evaluate_training(X_train, y_train):
     models = []
-    for target in TARGET_COLUMNS:
-        model_pipline = Pipeline([
-            ("regressor", Ridge())
-        ])
+    for target in TARGET_COLUMNS_MASS:
+        result = train_regression(X_train, y_train[target])
+        models.append(result.best_estimator_)
 
-        params_grid = {
-            "regressor__alpha": np.logspace(-8, 3, num=12, base=10),
-            "regressor__fit_intercept": [True, False],
-        }
-
-        model = GridSearchCV(model_pipline,
-                             params_grid,
-                             scoring=make_scorer(r2_score),
-                             n_jobs=-1,
-                             cv=10,
-                             verbose=1,
-                             refit=True,
-                             return_train_score=True
-                             )
-
-        model.fit(X_train[FEATURE_COLUMNS], y_train[target])
-
-        if verbose:
-            show_model_results(model)
-
-            errs = absolute_errors(
-                y_train[target], model.best_estimator_.predict(X_train[FEATURE_COLUMNS]),)
-            print(f"errs mean: {errs.mean()} std: {errs.std()}")
-            print(
-                f"r2: {r2_score(y_train[target], model.best_estimator_.predict(X_train[FEATURE_COLUMNS]))}")
-
-            if show_fit_plots:
-                plot_fitted_values(model.best_estimator_,
-                                   X_train[FEATURE_COLUMNS],
-                                   y_train[target],
-                                   target)
-
-        models.append(model)
-
-    return {target: model for target, model in zip(TARGET_COLUMNS, models)}
+    return models
 
 
 def show_model_results(model):

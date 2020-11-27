@@ -1,11 +1,11 @@
 from constants import FEATURE_GASES, TARGET_COLUMNS, FEATURE_GASES_MASS, TARGET_COLUMNS_MASS
 import pandas as pd
 import numpy as np
-from funcy import compose
+from funcy import rcompose
 
 
 def process(data):
-    return compose(
+    return rcompose(
         fill_na,
         convert_to_masses,
         clean,
@@ -49,7 +49,7 @@ def convert_to_masses(data):
         [y_train_processed[TARGET_COLUMNS_MASS], y_train['timestamp'].dt.strftime('%Y-%m-%d %H:%M')], axis=1)
 
     X_test_converted = pd.concat(
-        [X_test_processed[[FEATURE_GASES_MASS]], X_test['timestamp'].dt.strftime('%Y-%m-%d %H:%M')], axis=1)
+        [X_test_processed[FEATURE_GASES_MASS], X_test['timestamp'].dt.strftime('%Y-%m-%d %H:%M')], axis=1)
 
     return X_train_converted, y_train_converted, X_test_converted
 
@@ -82,10 +82,10 @@ def clean(data):
     X_y_train_clean_dates.loc[4879, :] = X_y_train_clean_dates.loc[4881, :]
     X_y_train_clean_dates.loc[4880, :] = X_y_train_clean_dates.loc[4881, :]
 
-    X_train_clean_dates = X_y_train_clean_dates[FEATURE_GASES_MASS.append(
-        'timestamp')]
-    y_train_clean_dates = X_y_train_clean_dates[TARGET_COLUMNS_MASS.append(
-        'timestamp')]
+    X_train_clean_dates = X_y_train_clean_dates[FEATURE_GASES_MASS + [
+        'timestamp']]
+    y_train_clean_dates = X_y_train_clean_dates[TARGET_COLUMNS_MASS + [
+        'timestamp']]
 
     return X_train_clean_dates, y_train_clean_dates, X_test
 
@@ -114,7 +114,6 @@ def smooth_series(series):
     WINDOW_SIZE = 30
     OUT_PERCENT = 5
     return series.rolling(WINDOW_SIZE, min_periods=1).apply(lambda x: smooth_window_func(x, OUT_PERCENT))
-    # test_B_rate_smoothed = X_test['B_rate'].rolling(30, min_periods=1).apply(lambda x: window_func(x, 5))
 
 
 def convert_to_percentes(gas_rate, total_rate):  # vectorized
