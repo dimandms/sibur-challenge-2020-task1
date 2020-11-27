@@ -7,6 +7,7 @@ from processing import process, smooth_series
 from modelling import evaluate_training
 from submission import create_submission
 from evaluate import predict
+from plotting import plot_submition
 
 
 def main():
@@ -23,6 +24,7 @@ def main():
                100 for pred in predict(models, X_test[FEATURE_GASES_MASS])]
 
     sub = create_submission(test_features["timestamp"], y_preds)
+    plot_submition(sub)
 
     sub.to_csv(f'submission.csv', index=False)
 
