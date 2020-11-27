@@ -3,14 +3,15 @@ import matplotlib.pyplot as plt
 from constants import FEATURE_COLUMNS
 
 from load_data import load_data
-from nan_processsing import process_na
+from processing import process
 from modelling import evaluate_training
 from submission import create_submission
 
 
 def main():
     data = load_data()
-    X_train, y_train, X_test = process_na(data)
+    X_train, y_train, X_test = process(data)
+
     models = evaluate_training(
         X_train, y_train, verbose=True, show_fit_plots=True)
     plt.show()
