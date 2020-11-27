@@ -1,9 +1,7 @@
-import matplotlib.pyplot as plt
-
 from constants import FEATURE_GASES_MASS
 
 from load_data import load_data
-from processing import process, smooth_series
+from processing import process, smooth_series, fill_na
 from modelling import evaluate_training
 from submission import create_submission
 from evaluate import predict
@@ -11,7 +9,7 @@ from plotting import plot_submition
 
 
 def main():
-    train_features, train_targets, test_features = load_data()
+    train_features, train_targets, test_features = fill_na(load_data())
 
     X_train, y_train, X_test = process(
         (train_features, train_targets, test_features))

@@ -6,7 +6,6 @@ from funcy import rcompose
 
 def process(data):
     return rcompose(
-        fill_na,
         convert_to_masses,
         clean,
         smooth_test_df

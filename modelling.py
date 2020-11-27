@@ -43,7 +43,7 @@ def train_rf_regression(X_train, y_train):
     model = RandomizedSearchCV(model_pipline,
                                params_grid,
                                scoring=make_scorer(
-                                   mean_absolute_percentage_error),
+                                   mean_absolute_percentage_error, greater_is_better=False),
                                n_jobs=-1,
                                cv=5,
                                verbose=1,
@@ -70,7 +70,8 @@ def train_regression(X_train, y_train):
 
     model = GridSearchCV(model_pipline,
                          params_grid,
-                         scoring=make_scorer(r2_score),
+                         scoring=make_scorer(
+                             mean_absolute_percentage_error, greater_is_better=False),
                          n_jobs=-1,
                          cv=5,
                          verbose=1,
@@ -79,6 +80,7 @@ def train_regression(X_train, y_train):
                          )
 
     model.fit(X_train, y_train)
+    # show_model_results(model)
 
     return model
 
