@@ -23,28 +23,28 @@ from constants import TARGET_COLUMNS_MASS
 def train_regression(X_train, y_train):
     model_pipline = Pipeline([
         # ("scaler", StandardScaler()),
-        ("polynomal", PolynomialFeatures(degree=3)),
+        # ("polynomal", PolynomialFeatures(degree=3)),
         # ("selection", SelectKBest(f_regression)),
         # ('ann', MLPRegressor(max_iter=500, batch_size=2000))
-        # ("regressor", ElasticNet())
-        ("booster", XGBRegressor())
+        ("regressor", ElasticNet())
+        # ("booster", XGBRegressor())
     ])
 
-    params_grid = {
-        'booster__objective': ['reg:squarederror'],
-        'booster__learning_rate': [0.05],  # so called `eta` value
-        'booster__max_depth': [5],
-        'booster__min_child_weight': [4],
-        'booster__subsample': [0.7],
-        'booster__colsample_bytree': [0.7],
-        'booster__n_estimators': [500]
-    }
-
     # params_grid = {
-    #     "regressor__alpha": np.logspace(-8, 8, num=17, base=10),
-    #     "regressor__l1_ratio": [0, 0.25, 0.5, 0.75, 1],
-    #     "regressor__fit_intercept": [True],
+    #     'booster__objective': ['reg:squarederror'],
+    #     'booster__learning_rate': [0.05],  # so called `eta` value
+    #     'booster__max_depth': [5],
+    #     'booster__min_child_weight': [4],
+    #     'booster__subsample': [0.7],
+    #     'booster__colsample_bytree': [0.7],
+    #     'booster__n_estimators': [500]
     # }
+
+    params_grid = {
+        "regressor__alpha": np.logspace(-8, 8, num=17, base=10),
+        "regressor__l1_ratio": [0, 0.25, 0.5, 0.75, 1],
+        "regressor__fit_intercept": [True],
+    }
 
     # params_grid = {
     #     # "ann__alpha": [1e-3]
