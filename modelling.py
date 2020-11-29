@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from constants import TARGET_COLUMNS_MASS
+from constants import TARGET_COLUMNS
 
 
 def train_regression(X_train, y_train):
@@ -72,7 +72,7 @@ def train_regression(X_train, y_train):
 def evaluate_training(X_train, y_train):
     models = []
     scores = []
-    for target in TARGET_COLUMNS_MASS:
+    for target in TARGET_COLUMNS:
         result = train_regression(X_train, y_train[target])
         models.append(result.best_estimator_)
         scores.append(result.best_score_ * -1)

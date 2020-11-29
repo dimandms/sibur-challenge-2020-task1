@@ -1,7 +1,7 @@
 from constants import FEATURE_GASES_MASS
 
 from load_data import load_data
-from processing import process, smooth_series, fill_na
+from processing import process
 from modelling import evaluate_training
 from submission import create_submission
 from evaluate import predict
@@ -9,22 +9,24 @@ from plotting import plot_submition
 
 
 def main():
-    train_features, train_targets, test_features = fill_na(load_data())
+    train_features, train_targets, test_features = load_data()
 
     X_train, y_train, X_test = process(
         (train_features, train_targets, test_features))
 
-    test_B_rate_smoothed = smooth_series(test_features['B_rate']).values
+    print(X_train)
+    print(y_train)
+    print(X_test)
 
-    models = evaluate_training(X_train[FEATURE_GASES_MASS], y_train)
+    # models = evaluate_training(X_train[FEATURE_GASES_MASS], y_train)
 
-    y_preds = [pred/test_B_rate_smoothed *
-               100 for pred in predict(models, X_test[FEATURE_GASES_MASS])]
+    # y_preds = [pred/test_B_rate_smoothed *
+    #            100 for pred in predict(models, X_test[FEATURE_GASES_MASS])]
 
-    sub = create_submission(test_features["timestamp"], y_preds)
-    # plot_submition(sub)
+    # sub = create_submission(test_features["timestamp"], y_preds)
+    # # plot_submition(sub)
 
-    sub.to_csv(f'submission.csv', index=False)
+    # sub.to_csv(f'submission.csv', index=False)
 
 
 if __name__ == "__main__":

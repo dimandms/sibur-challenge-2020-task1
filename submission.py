@@ -11,5 +11,6 @@ def create_submission(timestamps, y_preds):
 
     y_preds_array = np.concatenate([y_pred.reshape(-1, 1) for y_pred in y_preds], axis=1)
     y_preds_df = pd.DataFrame(y_preds_array, columns=TARGET_COLUMNS)
+    timestamps_df = pd.DataFrame(timestamps, columns=['timestamp'])
 
-    return pd.concat([timestamps, y_preds_df], axis=1)
+    return pd.concat([timestamps_df, y_preds_df], axis=1)

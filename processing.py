@@ -1,4 +1,4 @@
-from constants import FEATURE_GASES, TARGET_COLUMNS, FEATURE_GASES_MASS, TARGET_COLUMNS_MASS
+from constants import FEATURE_COLUMNS, FEATURE_GASES, TARGET_COLUMNS
 import pandas as pd
 import numpy as np
 from funcy import rcompose
@@ -6,10 +6,47 @@ from funcy import rcompose
 
 def process(data):
     return rcompose(
-        convert_to_masses,
-        clean,
-        smooth_test_df
+        shift,
+        fill_na,
+        clean_outliers,
+        smooth,
+        add_specified_features
     )(data)
+
+
+def shift(data):
+    train_features, train_targets, test_features = data
+    train_df = pd.concat([train_features, train_targets], axis=1)
+    df = pd.concat([train_df, test_features], axis=0)
+
+    for variable in TARGET_COLUMNS + FEATURE_COLUMNS:
+        if variable.startswith("A"):
+            df[variable] = df[variable].shift(1)
+
+    X_train = df[FEATURE_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
+    y_train = df[TARGET_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
+    X_test = df[FEATURE_COLUMNS].loc["2020-05-01 00:00:00":"2020-07-22 23:30:00", :]
+
+    return X_train, y_train, X_test
+
+
+def clean_outliers(data):
+    X_train, y_train, X_test = data
+
+    X_train.loc["2020-04-08 05:30": "2020-04-12 07:00", :] = np.nan
+    y_train.loc["2020-04-08 05:30": "2020-04-12 07:00", :] = np.nan
+
+    X_train.loc["2020-01-25 19:00": "2020-02-12 04:00", :] = np.nan
+    y_train.loc["2020-01-25 19:00": "2020-02-12 05:00", :] = np.nan
+
+    rate_minimal_value = 20.0
+    clean_mask = (X_train["A_rate"] < rate_minimal_value) | \
+                 (X_train["B_rate"] < rate_minimal_value)
+
+    X_train[clean_mask] = np.nan
+    y_train[clean_mask] = np.nan
+
+    return X_train, y_train, X_test
 
 
 def fill_na(data):
@@ -25,107 +62,30 @@ def fill_na(data):
     return X_train, y_train, X_test
 
 
-def convert_to_masses(data):
-    """from % of components and total rates to masses/rates of components"""
-    X_train, y_train, X_test = data
+def smooth(data):
+    SPAN = 30
+    train_features, train_targets, test_features = data
+    train_df = pd.concat([train_features, train_targets], axis=1)
+    df = pd.concat([train_df, test_features], axis=0).ewm(
+        span=SPAN, min_periods=1).mean()
 
-    X_train_processed = X_train.copy()
+    X_train = df[FEATURE_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
+    y_train = df[TARGET_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
+    X_test = df[FEATURE_COLUMNS].loc["2020-05-01 00:00:00":"2020-07-22 23:30:00", :]
+
+    return X_train, y_train, X_test
+
+
+def add_specified_features(data):
+    train_features, train_targets, test_features = data
+    features_df = pd.concat([train_features, test_features])
+
     for gas in FEATURE_GASES:
-        X_train_processed[f"{gas}_mass"] = X_train[gas]*X_train['A_rate']/100
+        features_df[f"{gas}_specified"] = features_df[gas] * \
+            features_df["A_rate"]/features_df["B_rate"]
 
-    y_train_processed = y_train.copy()
-    for gas in TARGET_COLUMNS:
-        y_train_processed[f"{gas}_mass"] = y_train[gas]*X_train['B_rate']/100
+    X_train = features_df.loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
+    y_train = train_targets
+    X_test = features_df.loc["2020-05-01 00:00:00":"2020-07-22 23:30:00", :]
 
-    X_test_processed = X_test.copy()
-    for gas in FEATURE_GASES:
-        X_test_processed[f"{gas}_mass"] = X_test[gas]*X_test['A_rate']/100
-
-    X_train_converted = pd.concat(
-        [X_train_processed[FEATURE_GASES_MASS], X_train['timestamp'].dt.strftime('%Y-%m-%d %H:%M')], axis=1)
-
-    y_train_converted = pd.concat(
-        [y_train_processed[TARGET_COLUMNS_MASS], y_train['timestamp'].dt.strftime('%Y-%m-%d %H:%M')], axis=1)
-
-    X_test_converted = pd.concat(
-        [X_test_processed[FEATURE_GASES_MASS], X_test['timestamp'].dt.strftime('%Y-%m-%d %H:%M')], axis=1)
-
-    return X_train_converted, y_train_converted, X_test_converted
-
-
-def clean(data):
-    X_train, y_train, X_test = data
-    X_y_train = pd.concat([X_train.drop("timestamp", axis=1), y_train], axis=1)
-
-    MINIMAL_VALUE = 1
-    clean_mask = X_y_train.drop(['timestamp', 'A_CH4_mass'], axis=1).apply(
-        lambda x: mask_row(x, MINIMAL_VALUE), axis=1)
-    X_y_train_clean = X_y_train[clean_mask]
-
-    date_clean_mask = (X_y_train['timestamp'] < "2020-04-08 8:30") | (
-        X_y_train['timestamp'] > "2020-04-11 12:00")
-    X_y_train_clean_dates = X_y_train_clean[date_clean_mask]
-
-    X_y_train_clean_dates.loc[4463:4465, 'A_C6H14_mass'] = 3.942185
-    X_y_train_clean_dates.loc[4901, :] = X_y_train_clean_dates.loc[4900, :]
-    X_y_train_clean_dates.loc[4902, :] = X_y_train_clean_dates.loc[4900, :]
-    X_y_train_clean_dates.loc[4734, :] = X_y_train_clean_dates.loc[4733, :]
-    X_y_train_clean_dates.loc[4738, :] = X_y_train_clean_dates.loc[4737, :]
-    X_y_train_clean_dates.loc[4739, :] = X_y_train_clean_dates.loc[4737, :]
-    X_y_train_clean_dates.loc[4873, :] = X_y_train_clean_dates.loc[4881, :]
-    X_y_train_clean_dates.loc[4874, :] = X_y_train_clean_dates.loc[4881, :]
-    X_y_train_clean_dates.loc[4875, :] = X_y_train_clean_dates.loc[4881, :]
-    X_y_train_clean_dates.loc[4876, :] = X_y_train_clean_dates.loc[4881, :]
-    X_y_train_clean_dates.loc[4877, :] = X_y_train_clean_dates.loc[4881, :]
-    X_y_train_clean_dates.loc[4878, :] = X_y_train_clean_dates.loc[4881, :]
-    X_y_train_clean_dates.loc[4879, :] = X_y_train_clean_dates.loc[4881, :]
-    X_y_train_clean_dates.loc[4880, :] = X_y_train_clean_dates.loc[4881, :]
-
-    X_train_clean_dates = X_y_train_clean_dates[FEATURE_GASES_MASS + [
-        'timestamp']]
-    y_train_clean_dates = X_y_train_clean_dates[TARGET_COLUMNS_MASS + [
-        'timestamp']]
-
-    return X_train_clean_dates, y_train_clean_dates, X_test
-
-
-def smooth_test_df(data):
-    X_train, y_train, X_test = data
-    X_test_smoothed = X_test.copy()
-
-    WINDOW_SIZE = 30
-    OUT_PERCENT = 5
-    for gas in FEATURE_GASES_MASS:
-        X_test_smoothed[gas] = X_test_smoothed[gas].rolling(
-            WINDOW_SIZE, min_periods=1).apply(lambda x: smooth_window_func(x, OUT_PERCENT))
-
-    return X_train, y_train, X_test_smoothed
-
-
-def smooth_window_func(x, out_precent=10):
-    if abs(x.iloc[-1] - x.median()) > x.median()*out_precent/100:
-        return np.median(x)
-
-    return x.iloc[-1]
-
-
-def smooth_series(series):
-    WINDOW_SIZE = 30
-    OUT_PERCENT = 5
-    return series.rolling(WINDOW_SIZE, min_periods=1).apply(lambda x: smooth_window_func(x, OUT_PERCENT))
-
-
-def convert_to_percentes(gas_rate, total_rate):  # vectorized
-    return gas_rate/total_rate*100
-
-
-def has_value_less_then(arr, value):
-    for x in arr:
-        if x < value:
-            return True
-
-    return False
-
-
-def mask_row(row, value):
-    return not has_value_less_then(row, value)
+    return X_train, y_train, X_test
