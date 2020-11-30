@@ -11,6 +11,9 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold
 
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+
 from xgboost import XGBRegressor
 
 import numpy as np
@@ -18,6 +21,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from constants import TARGET_COLUMNS
+
+warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
 
 def train_regression(X_train, y_train):

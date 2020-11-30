@@ -7,11 +7,21 @@ from funcy import rcompose
 def process(data):
     return rcompose(
         shift,
-        fill_na,
         clean_outliers,
+        fill_na,
+        debug,
         smooth,
         add_specified_features
     )(data)
+
+def debug(data):
+    train_features, train_targets, test_features = data
+
+    print(train_features[train_features.isna().any(axis=1)])
+    print(train_targets[train_targets.isna().any(axis=1)])
+    print(test_features[test_features.isna().any(axis=1)])
+
+    return train_features, train_targets, test_features
 
 
 def shift(data):
@@ -19,7 +29,7 @@ def shift(data):
     train_df = pd.concat([train_features, train_targets], axis=1)
     df = pd.concat([train_df, test_features], axis=0)
 
-    SHIFT=184
+    SHIFT = 184
     for variable in TARGET_COLUMNS + FEATURE_COLUMNS:
         if variable.startswith("A"):
             df[variable] = df[variable].shift(SHIFT)
