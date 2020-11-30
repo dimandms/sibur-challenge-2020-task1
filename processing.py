@@ -9,10 +9,10 @@ def process(data):
         shift,
         clean_outliers,
         fill_na,
-        debug,
         smooth,
         add_specified_features
     )(data)
+
 
 def debug(data):
     train_features, train_targets, test_features = data

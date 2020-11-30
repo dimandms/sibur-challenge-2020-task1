@@ -11,6 +11,7 @@ from plotting import plot_submition
 def main():
     train_features, train_targets, test_features = process(load_data())
     models = evaluate_training(train_features, train_targets)
+
     y_preds = [pred for pred in predict(models, test_features)]
 
     sub = create_submission(test_features.index.values, y_preds)

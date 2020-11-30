@@ -11,9 +11,6 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold
 
-import warnings
-from sklearn.exceptions import ConvergenceWarning
-
 from xgboost import XGBRegressor
 
 import numpy as np
@@ -22,41 +19,18 @@ import matplotlib.pyplot as plt
 
 from constants import TARGET_COLUMNS
 
-warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
-
 
 def train_regression(X_train, y_train):
     model_pipline = Pipeline([
-        # ("scaler", StandardScaler()),
-        # ("polynomal", PolynomialFeatures(degree=3)),
-        # ("selection", SelectKBest(f_regression)),
-        # ('ann', MLPRegressor(max_iter=500, batch_size=2000))
+        ("scaler", StandardScaler()),
         ("regressor", ElasticNet())
-        # ("booster", XGBRegressor())
     ])
 
-    # params_grid = {
-    #     'booster__objective': ['reg:squarederror'],
-    #     'booster__learning_rate': [0.05],  # so called `eta` value
-    #     'booster__max_depth': [5],
-    #     'booster__min_child_weight': [4],
-    #     'booster__subsample': [0.7],
-    #     'booster__colsample_bytree': [0.7],
-    #     'booster__n_estimators': [500]
-    # }
-
     params_grid = {
-        "regressor__alpha": np.logspace(-8, 8, num=17, base=10),
+        "regressor__alpha": np.logspace(-10, 10, num=21, base=10),
         "regressor__l1_ratio": [0, 0.25, 0.5, 0.75, 1],
         "regressor__fit_intercept": [True],
     }
-
-    # params_grid = {
-    #     # "ann__alpha": [1e-3]
-    #     # "ann__alpha": [1e-4,1e-3,1e-2],
-    #     # "ann__alpha": np.logspace(-8, 8, num=17, base=10),
-    #     # "ann__hidden_layer_sizes": np.logspace(-8, 8, num=17, base=10),
-    # }
 
     model = GridSearchCV(model_pipline,
                          params_grid,
@@ -77,14 +51,18 @@ def train_regression(X_train, y_train):
 def evaluate_training(X_train, y_train):
     models = []
     scores = []
+    best_params = []
     for target in TARGET_COLUMNS:
         result = train_regression(X_train, y_train[target])
         models.append(result.best_estimator_)
         scores.append(result.best_score_ * -1)
+        best_params.append(result.best_params_)
 
     print("\n==================== Train results ====================")
     print(f"scores: {scores}")
     print(f"total score: {np.mean(scores)}")
+    for params in best_params:
+        print(params)
     print("========================= End =========================")
 
     return models
