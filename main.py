@@ -3,30 +3,22 @@ from constants import FEATURE_GASES_MASS
 from load_data import load_data
 from processing import process
 from modelling import evaluate_training
-from submission import create_submission
+from submission import create_submission, create_smoothed_submission
 from evaluate import predict
 from plotting import plot_submition
 
 
 def main():
-    train_features, train_targets, test_features = load_data()
+    train_features, train_targets, test_features = process(load_data())
+    models = evaluate_training(train_features, train_targets)
+    y_preds = [pred for pred in predict(models, test_features)]
+    
+    sub = create_submission(test_features.index.values, y_preds)
+    sub_smoothed = create_smoothed_submission(
+        test_features.index.values, y_preds)
 
-    X_train, y_train, X_test = process(
-        (train_features, train_targets, test_features))
-
-    print(X_train)
-    print(y_train)
-    print(X_test)
-
-    # models = evaluate_training(X_train[FEATURE_GASES_MASS], y_train)
-
-    # y_preds = [pred/test_B_rate_smoothed *
-    #            100 for pred in predict(models, X_test[FEATURE_GASES_MASS])]
-
-    # sub = create_submission(test_features["timestamp"], y_preds)
-    # # plot_submition(sub)
-
-    # sub.to_csv(f'submission.csv', index=False)
+    sub.to_csv(f'submission.csv', index=False)
+    sub_smoothed.to_csv(f'submission_smoothed.csv', index=False)
 
 
 if __name__ == "__main__":

@@ -19,9 +19,10 @@ def shift(data):
     train_df = pd.concat([train_features, train_targets], axis=1)
     df = pd.concat([train_df, test_features], axis=0)
 
+    SHIFT=220
     for variable in TARGET_COLUMNS + FEATURE_COLUMNS:
         if variable.startswith("A"):
-            df[variable] = df[variable].shift(1)
+            df[variable] = df[variable].shift(SHIFT)
 
     X_train = df[FEATURE_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
     y_train = df[TARGET_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
