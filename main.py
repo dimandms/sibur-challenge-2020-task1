@@ -1,18 +1,23 @@
-from constants import FEATURE_GASES_MASS
+from args import parse_args
 
 from load_data import load_data
 from processing import process
 from modelling import evaluate_training
 from submission import create_submission, create_smoothed_submission
 from evaluate import predict
-from plotting import plot_submition
+from result_view import show_results
 
 
 def main():
+    args = parse_args()
+
     train_features, train_targets, test_features = process(load_data())
     models = evaluate_training(train_features, train_targets)
+    if args.verbose:
+        show_results(models)
 
-    y_preds = [pred for pred in predict(models, test_features)]
+    estimators = [model.best_estimator_ for model in models]
+    y_preds = [pred for pred in predict(estimators, test_features)]
 
     sub = create_submission(test_features.index.values, y_preds)
     sub_smoothed = create_smoothed_submission(

@@ -10,6 +10,7 @@ from metrics import mean_absolute_percentage_error, absolute_errors
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold
+from sklearn.decomposition import PCA
 
 from xgboost import XGBRegressor
 
@@ -23,6 +24,7 @@ from constants import TARGET_COLUMNS
 def train_regression(X_train, y_train):
     model_pipline = Pipeline([
         ("scaler", StandardScaler()),
+        # ("pca", PCA()),
         ("regressor", ElasticNet())
     ])
 
@@ -30,6 +32,7 @@ def train_regression(X_train, y_train):
         "regressor__alpha": np.logspace(-10, 10, num=21, base=10),
         "regressor__l1_ratio": [0, 0.25, 0.5, 0.75, 1],
         "regressor__fit_intercept": [True],
+        # "pca__n_components": [3, 5, 7, 10]
     }
 
     model = GridSearchCV(model_pipline,
@@ -43,44 +46,14 @@ def train_regression(X_train, y_train):
                          )
 
     model.fit(X_train, y_train)
-    # show_model_results(model)
 
     return model
 
 
 def evaluate_training(X_train, y_train):
     models = []
-    scores = []
-    best_params = []
     for target in TARGET_COLUMNS:
         result = train_regression(X_train, y_train[target])
-        models.append(result.best_estimator_)
-        scores.append(result.best_score_ * -1)
-        best_params.append(result.best_params_)
-
-    print("\n==================== Train results ====================")
-    print(f"scores: {scores}")
-    print(f"total score: {np.mean(scores)}")
-    for params in best_params:
-        print(params)
-    print("========================= End =========================")
+        models.append(result)
 
     return models
-
-
-def show_model_results(model):
-    cv_results_df = pd.DataFrame(model.cv_results_)
-    print("\n")
-    print(cv_results_df[["mean_train_score", "std_train_score",
-                         "mean_test_score", "std_test_score",
-                         "rank_test_score"]]
-          )
-
-
-def plot_fitted_values(y_pred, y_true, title):
-    _, ax = plt.subplots(1, 1, figsize=(15, 3))
-
-    ax.plot(y_true, label="true")
-    ax.plot(y_pred, label="prediction")
-    ax.legend()
-    ax.set_title(title)
