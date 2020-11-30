@@ -30,6 +30,7 @@ def shift(data):
     df = pd.concat([train_df, test_features], axis=0)
 
     SHIFT = 184
+    # SHIFT = 200
     for variable in TARGET_COLUMNS + FEATURE_COLUMNS:
         if variable.startswith("A"):
             df[variable] = df[variable].shift(SHIFT)
