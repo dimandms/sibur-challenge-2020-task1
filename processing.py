@@ -19,7 +19,7 @@ def shift(data):
     train_df = pd.concat([train_features, train_targets], axis=1)
     df = pd.concat([train_df, test_features], axis=0)
 
-    SHIFT=220
+    SHIFT=184
     for variable in TARGET_COLUMNS + FEATURE_COLUMNS:
         if variable.startswith("A"):
             df[variable] = df[variable].shift(SHIFT)
@@ -37,8 +37,8 @@ def clean_outliers(data):
     X_train.loc["2020-04-08 05:30": "2020-04-12 07:00", :] = np.nan
     y_train.loc["2020-04-08 05:30": "2020-04-12 07:00", :] = np.nan
 
-    X_train.loc["2020-01-25 19:00": "2020-02-12 04:00", :] = np.nan
-    y_train.loc["2020-01-25 19:00": "2020-02-12 05:00", :] = np.nan
+    X_train.loc["2020-01-25 19:00": "2020-02-14 16:30", :] = np.nan
+    y_train.loc["2020-01-25 19:00": "2020-02-14 16:30", :] = np.nan
 
     rate_minimal_value = 20.0
     clean_mask = (X_train["A_rate"] < rate_minimal_value) | \
