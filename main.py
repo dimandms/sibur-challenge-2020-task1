@@ -1,3 +1,4 @@
+import pickle
 from args import parse_args
 
 from load_data import load_data
@@ -15,6 +16,9 @@ def main():
     models = evaluate_training(train_features, train_targets)
     if args.verbose:
         show_results(models)
+
+    with open('results.pickle', 'wb') as f:
+        pickle.dump(models, f)
 
     estimators = [model.best_estimator_ for model in models]
     y_preds = [pred for pred in predict(estimators, test_features)]
