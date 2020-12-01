@@ -5,15 +5,18 @@ import numpy as np
 from funcy import rcompose
 
 
-def process(data):
-    return rcompose(
-        shift,
-        clean_outliers,
-        fill_na,
-        smooth,
-        add_specified_features,
-        # delete_features
-    )(data)
+def process(shift_num):
+    def internal(data):
+        return rcompose(
+            shift(shift_num),
+            clean_outliers,
+            fill_na,
+            smooth,
+            add_specified_features,
+            # delete_features
+        )(data)
+
+    return internal
 
 
 def delete_features(data):
@@ -31,22 +34,23 @@ def debug(data):
     return train_features, train_targets, test_features
 
 
-def shift(data):
-    train_features, train_targets, test_features = data
-    train_df = pd.concat([train_features, train_targets], axis=1)
-    df = pd.concat([train_df, test_features], axis=0)
+def shift(num=184):
+    def internal(data):
+        train_features, train_targets, test_features = data
+        train_df = pd.concat([train_features, train_targets], axis=1)
+        df = pd.concat([train_df, test_features], axis=0)
 
-    # SHIFT = 200
-    SHIFT = 184
-    for variable in TARGET_COLUMNS + FEATURE_COLUMNS:
-        if variable.startswith("A"):
-            df[variable] = df[variable].shift(SHIFT)
+        for variable in TARGET_COLUMNS + FEATURE_COLUMNS:
+            if variable.startswith("A"):
+                df[variable] = df[variable].shift(num)
 
-    X_train = df[FEATURE_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
-    y_train = df[TARGET_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
-    X_test = df[FEATURE_COLUMNS].loc["2020-05-01 00:00:00":"2020-07-22 23:30:00", :]
+        X_train = df[FEATURE_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
+        y_train = df[TARGET_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
+        X_test = df[FEATURE_COLUMNS].loc["2020-05-01 00:00:00":"2020-07-22 23:30:00", :]
 
-    return X_train, y_train, X_test
+        return X_train, y_train, X_test
+
+    return internal
 
 
 def clean_outliers(data):
