@@ -1,30 +1,47 @@
-from constants import FEATURE_GASES_MASS
+from constants import TARGET_COLUMNS
+import pickle
+from args import parse_args
 
 from load_data import load_data
-from processing import process, smooth_series, fill_na
+from processing import process
 from modelling import evaluate_training
-from submission import create_submission
+from submission import create_submission, create_smoothed_submission
 from evaluate import predict
-from plotting import plot_submition
+from result_view import show_results
+
+import matplotlib.pyplot as plt
 
 
 def main():
-    train_features, train_targets, test_features = fill_na(load_data())
+    args = parse_args()
 
-    X_train, y_train, X_test = process(
-        (train_features, train_targets, test_features))
+    train_features, train_targets, test_features = process(load_data())
+    models = evaluate_training(train_features, train_targets)
+    if args.verbose:
+        show_results(models)
 
-    test_B_rate_smoothed = smooth_series(test_features['B_rate']).values
+    with open('results.pickle', 'wb') as f:
+        pickle.dump(models, f)
 
-    models = evaluate_training(X_train[FEATURE_GASES_MASS], y_train)
+    estimators = [model.best_estimator_ for model in models]
 
-    y_preds = [pred/test_B_rate_smoothed *
-               100 for pred in predict(models, X_test[FEATURE_GASES_MASS])]
+    # -----
+    _, axes = plt.subplots(4, 1, figsize=(15, 8))
+    for target, ax, pred in zip(TARGET_COLUMNS, axes, [pred for pred in predict(estimators, train_features)]):
+        ax.plot(train_targets[target].values, label=f"true_{target}")
+        ax.plot(pred, label=f"pred_{target}")
+        ax.legend()
+    plt.show()
+    # -----
 
-    sub = create_submission(test_features["timestamp"], y_preds)
-    # plot_submition(sub)
+    y_preds = [pred for pred in predict(estimators, test_features)]
+
+    sub = create_submission(test_features.index.values, y_preds)
+    sub_smoothed = create_smoothed_submission(
+        test_features.index.values, y_preds)
 
     sub.to_csv(f'submission.csv', index=False)
+    sub_smoothed.to_csv(f'submission_smoothed.csv', index=False)
 
 
 if __name__ == "__main__":
