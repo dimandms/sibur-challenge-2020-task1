@@ -30,7 +30,7 @@ def train_regression(X_train, y_train):
     params_grid = {
         "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
         "regressor__l1_ratio": [0, 1],
-        "regressor__fit_intercept": [True, False],
+        "regressor__fit_intercept": [True],
     }
 
     model = GridSearchCV(model_pipline,

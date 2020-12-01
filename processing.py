@@ -1,3 +1,4 @@
+from matplotlib.pyplot import axis
 from constants import FEATURE_COLUMNS, FEATURE_GASES, TARGET_COLUMNS
 import pandas as pd
 import numpy as np
@@ -10,8 +11,14 @@ def process(data):
         clean_outliers,
         fill_na,
         smooth,
-        add_specified_features
+        add_specified_features,
+        # delete_features
     )(data)
+
+
+def delete_features(data):
+    train_features, train_targets, test_features = data
+    return train_features.drop(['A_rate', 'B_rate'], axis=1), train_targets, test_features.drop(['A_rate', 'B_rate'], axis=1)
 
 
 def debug(data):
@@ -29,8 +36,8 @@ def shift(data):
     train_df = pd.concat([train_features, train_targets], axis=1)
     df = pd.concat([train_df, test_features], axis=0)
 
-    SHIFT = 184
     # SHIFT = 200
+    SHIFT = 184
     for variable in TARGET_COLUMNS + FEATURE_COLUMNS:
         if variable.startswith("A"):
             df[variable] = df[variable].shift(SHIFT)
