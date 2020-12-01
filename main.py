@@ -1,3 +1,4 @@
+from constants import TARGET_COLUMNS
 import pickle
 from args import parse_args
 
@@ -7,6 +8,8 @@ from modelling import evaluate_training
 from submission import create_submission, create_smoothed_submission
 from evaluate import predict
 from result_view import show_results
+
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -21,6 +24,16 @@ def main():
         pickle.dump(models, f)
 
     estimators = [model.best_estimator_ for model in models]
+
+    # -----
+    _, axes = plt.subplots(4, 1, figsize=(15, 8))
+    for target, ax, pred in zip(TARGET_COLUMNS, axes, [pred for pred in predict(estimators, train_features)]):
+        ax.plot(train_targets[target].values, label=f"true_{target}")
+        ax.plot(pred, label=f"pred_{target}")
+        ax.legend()
+    plt.show()
+    # -----
+
     y_preds = [pred for pred in predict(estimators, test_features)]
 
     sub = create_submission(test_features.index.values, y_preds)
