@@ -1,56 +1,16 @@
-from matplotlib.pyplot import axis
 from constants import FEATURE_COLUMNS, FEATURE_GASES, TARGET_COLUMNS
 import pandas as pd
 import numpy as np
 from funcy import rcompose
 
 
-def process(shift_num):
-    def internal(data):
-        return rcompose(
-            shift(shift_num),
-            clean_outliers,
-            fill_na,
-            smooth,
-            add_specified_features,
-            # delete_features
-        )(data)
-
-    return internal
-
-
-def delete_features(data):
-    train_features, train_targets, test_features = data
-    return train_features.drop(['A_rate', 'B_rate'], axis=1), train_targets, test_features.drop(['A_rate', 'B_rate'], axis=1)
-
-
-def debug(data):
-    train_features, train_targets, test_features = data
-
-    print(train_features[train_features.isna().any(axis=1)])
-    print(train_targets[train_targets.isna().any(axis=1)])
-    print(test_features[test_features.isna().any(axis=1)])
-
-    return train_features, train_targets, test_features
-
-
-def shift(num=184):
-    def internal(data):
-        train_features, train_targets, test_features = data
-        train_df = pd.concat([train_features, train_targets], axis=1)
-        df = pd.concat([train_df, test_features], axis=0)
-
-        for variable in TARGET_COLUMNS + FEATURE_COLUMNS:
-            if variable.startswith("A"):
-                df[variable] = df[variable].shift(num)
-
-        X_train = df[FEATURE_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
-        y_train = df[TARGET_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
-        X_test = df[FEATURE_COLUMNS].loc["2020-05-01 00:00:00":"2020-07-22 23:30:00", :]
-
-        return X_train, y_train, X_test
-
-    return internal
+def process(data):
+    return rcompose(
+        clean_outliers,
+        fill_na,
+        smooth,
+        add_specified_features,
+    )(data)
 
 
 def clean_outliers(data):
