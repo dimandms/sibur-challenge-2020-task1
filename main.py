@@ -17,65 +17,76 @@ import numpy as np
 from sklearn.tree import DecisionTreeRegressor
 
 
+def simple_model_preds(shift_num, loaded_data, verbose):
+    train_features, train_targets, test_features = process(
+        shift_num)(loaded_data)
+    models = evaluate_training(train_features, train_targets)
+    if verbose:
+        print(f"shift_num: {shift_num}")
+        show_results(models)
+
+    estimators = [model.best_estimator_ for model in models]
+
+    # -----
+    fits = [pred for pred in predict(estimators, train_features)]
+    _, axes = plt.subplots(4, 1, figsize=(15, 8))
+
+    for target, ax, fit in zip(TARGET_COLUMNS, axes, fits):
+        ax.plot(train_targets[target].values, label=f"true_{target}")
+        ax.plot(fit, label=f"pred_{target}")
+        ax.legend()
+
+    _, axes = plt.subplots(4, 1, figsize=(15, 8))
+    for target, ax, fit in zip(TARGET_COLUMNS, axes, fits):
+        errs = train_targets[target].values - fit
+        ax.hist(errs, bins=50)
+        ax.legend()
+    # -----
+    return estimators, fits, test_features, train_targets
+
+
+def lists_sub_mean(list1, list2):
+    return [(v1+v2)/2 for v1, v2 in zip(list1, list2)]
+
+
 def main():
     args = parse_args()
     loaded_data = load_data()
 
-    basic_models_preds = []
-    basic_models_fits = []
-    estimators = []
+    results = []
     for shift_num in [184, 190]:
-        train_features, train_targets, test_features = process(
-            shift_num)(loaded_data)
-        models = evaluate_training(train_features, train_targets)
-        if args.verbose:
-            show_results(models)
+        result = simple_model_preds(shift_num, loaded_data, args.verbose)
+        results.append(result)
 
-        for model in models:
-            estimators.append(model.best_estimator_)
+    estimators1, fits1, test_features1, train_targets1 = results[0]
+    estimators2, fits2, test_features2, _ = results[1]
 
-        y_preds = [pred for pred in predict(estimators, test_features)]
-        basic_models_preds = y_preds
-
-        y_fits = [pred for pred in predict(estimators, train_features)]
-        basic_models_fits = y_fits
-
-    print(len(basic_models_fits))
-
-    # -----------------------
-    train_features, train_targets, test_features = process(184)(loaded_data)
-    X_train_tree = pd.concat([pd.DataFrame(fit) for fit in basic_models_fits] +
-                             [train_features["A_rate"].reset_index(drop=True)], axis=1)
-    trees = []
-    for target in TARGET_COLUMNS:
-        dtree = DecisionTreeRegressor()
-        dtree.fit(X_train_tree, train_targets[target])
-        trees.append(dtree)
-
-    if args.verbose:
-        print("\n==================== Train results (tree) ====================")
-        scores = [mean_absolute_percentage_error(train_targets[target], tree.predict(
-            X_train_tree)) * -1 for tree, target in zip(trees, TARGET_COLUMNS)]
-        print(f"scores: {scores}")
-        print(f"total score: {np.mean(scores)}")
-        print("========================= End =========================")
-    # -----------------------
-
-    # -----
     _, axes = plt.subplots(4, 1, figsize=(15, 8))
-    for target, ax, pred in zip(TARGET_COLUMNS, axes, [pred for pred in predict(trees, X_train_tree)]):
-        ax.plot(train_targets[target].values, label=f"true_{target}")
-        ax.plot(pred, label=f"pred_{target}")
+
+    for target, ax, fits in zip(TARGET_COLUMNS, axes, lists_sub_mean(fits1, fits2)):
+        ax.plot(train_targets1[target].values, label=f"true_{target}")
+        ax.plot(fits, label=f"pred_{target}")
         ax.legend()
-    # -----
+
+    _, axes = plt.subplots(4, 1, figsize=(15, 8))
+    for target, ax, fit in zip(TARGET_COLUMNS, axes, lists_sub_mean(fits1, fits2)):
+        errs = train_targets1[target].values - fit
+        ax.hist(errs, bins=50)
+        ax.legend()
+
     plt.show()
 
-    # sub = create_submission(test_features.index.values, y_preds)
-    # sub_smoothed = create_smoothed_submission(
-    #     test_features.index.values, y_preds)
+    y_preds1 = [pred for pred in predict(estimators1, test_features1)]
+    y_preds2 = [pred for pred in predict(estimators2, test_features2)]
 
-    # sub.to_csv(f'submission.csv', index=False)
-    # sub_smoothed.to_csv(f'submission_smoothed.csv', index=False)
+    y_preds = lists_sub_mean(y_preds1, y_preds2)
+
+    sub = create_submission(test_features1.index.values, y_preds)
+    sub_smoothed = create_smoothed_submission(
+        test_features1.index.values, y_preds)
+
+    sub.to_csv(f'submission.csv', index=False)
+    sub_smoothed.to_csv(f'submission_smoothed.csv', index=False)
 
 
 if __name__ == "__main__":
