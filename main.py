@@ -4,7 +4,7 @@ from args import parse_args
 from load_data import load_data
 from processing import process
 from modelling import evaluate_training
-from submission import create_submission, create_smoothed_submission
+from submission import create_submission
 from evaluate import predict
 from result_view import show_results
 
@@ -83,7 +83,8 @@ def main():
     loaded_data = load_data()
 
     results = []
-    for shift_num in [184, 190]:
+    # for shift_num in [184, 190]:
+    for shift_num in [175, 185, 195]:
         result = simple_model_preds(shift_num, loaded_data, args.verbose)
         results.append(result)
 
