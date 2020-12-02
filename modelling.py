@@ -24,13 +24,15 @@ from constants import TARGET_COLUMNS
 def train_regression(X_train, y_train):
     model_pipline = Pipeline([
         ("scaler", StandardScaler()),
+        ("selection", SelectKBest(f_regression)),
         ("regressor", ElasticNet())
     ])
 
     params_grid = {
         "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
-        "regressor__l1_ratio": [0, 1],
+        "regressor__l1_ratio": [1],
         "regressor__fit_intercept": [True],
+        "selection__k": [3],
     }
 
     model = GridSearchCV(model_pipline,
