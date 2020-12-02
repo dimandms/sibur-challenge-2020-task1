@@ -1,5 +1,4 @@
 from constants import TARGET_COLUMNS
-import pickle
 from args import parse_args
 
 from load_data import load_data
@@ -8,13 +7,8 @@ from modelling import evaluate_training
 from submission import create_submission, create_smoothed_submission
 from evaluate import predict
 from result_view import show_results
-from metrics import mean_absolute_percentage_error
 
 import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-
-from sklearn.tree import DecisionTreeRegressor
 
 
 def simple_model_preds(shift_num, loaded_data, verbose):
@@ -45,8 +39,43 @@ def simple_model_preds(shift_num, loaded_data, verbose):
     return estimators, fits, test_features, train_targets
 
 
-def lists_sub_mean(list1, list2):
-    return [(v1+v2)/2 for v1, v2 in zip(list1, list2)]
+def mean_of_lists(x): return [sum(values)/len(values)
+                              for values in list(zip(*x))]
+
+
+def stacking(simple_results, verbose):
+    simple_estimators = []
+    simple_fits = []
+    simple_test_features = []
+    simple_train_targets = []
+
+    for estimators, fits, test_features, train_targets in simple_results:
+        simple_estimators.append(estimators)
+        simple_fits.append(fits)
+        simple_test_features.append(test_features)
+        simple_train_targets.append(train_targets)
+
+    if verbose:
+        _, axes = plt.subplots(4, 1, figsize=(15, 8))
+
+        for target, ax, fits in zip(TARGET_COLUMNS, axes, mean_of_lists(simple_fits)):
+            ax.plot(simple_train_targets[0]
+                    [target].values, label=f"true_{target}")
+            ax.plot(fits, label=f"pred_{target}")
+            ax.legend()
+
+        _, axes = plt.subplots(4, 1, figsize=(15, 8))
+        for target, ax, fit in zip(TARGET_COLUMNS, axes, mean_of_lists(simple_fits)):
+            errs = simple_train_targets[0][target].values - fit
+            ax.hist(errs, bins=50)
+            ax.legend()
+
+    y_preds = [predict(estimators, test_features) for estimators,
+               test_features in zip(simple_estimators, simple_test_features)]
+
+    y_preds_mean = mean_of_lists(y_preds)
+
+    return y_preds_mean, simple_test_features[0]
 
 
 def main():
@@ -58,35 +87,12 @@ def main():
         result = simple_model_preds(shift_num, loaded_data, args.verbose)
         results.append(result)
 
-    estimators1, fits1, test_features1, train_targets1 = results[0]
-    estimators2, fits2, test_features2, _ = results[1]
-
-    _, axes = plt.subplots(4, 1, figsize=(15, 8))
-
-    for target, ax, fits in zip(TARGET_COLUMNS, axes, lists_sub_mean(fits1, fits2)):
-        ax.plot(train_targets1[target].values, label=f"true_{target}")
-        ax.plot(fits, label=f"pred_{target}")
-        ax.legend()
-
-    _, axes = plt.subplots(4, 1, figsize=(15, 8))
-    for target, ax, fit in zip(TARGET_COLUMNS, axes, lists_sub_mean(fits1, fits2)):
-        errs = train_targets1[target].values - fit
-        ax.hist(errs, bins=50)
-        ax.legend()
+    y_preds, test_features = stacking(results, args.verbose)
 
     plt.show()
 
-    y_preds1 = [pred for pred in predict(estimators1, test_features1)]
-    y_preds2 = [pred for pred in predict(estimators2, test_features2)]
-
-    y_preds = lists_sub_mean(y_preds1, y_preds2)
-
-    sub = create_submission(test_features1.index.values, y_preds)
-    sub_smoothed = create_smoothed_submission(
-        test_features1.index.values, y_preds)
-
+    sub = create_submission(test_features.index.values, y_preds)
     sub.to_csv(f'submission.csv', index=False)
-    sub_smoothed.to_csv(f'submission_smoothed.csv', index=False)
 
 
 if __name__ == "__main__":
