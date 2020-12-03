@@ -37,13 +37,19 @@ def main():
         y_fits.append(y_fitted)
         y_preds.append(y_pred)
 
-    fits = pd.concat(y_fits + [y_train], axis=1)
+    y_fits_df = pd.concat(y_fits, axis=1)
+    y_fits_df.columns = [f"{c} fitted" for c in TARGET_COLUMNS]
+
+    fits = pd.concat([y_fits_df, y_train], axis=1)
     fits.plot()
-    plt.show()
 
     sub = pd.concat(y_preds, axis=1)
     sub.columns = TARGET_COLUMNS
     sub.to_csv(f'submission.csv')
+
+    sub.plot()
+
+    plt.show()
 
 
 if __name__ == "__main__":
