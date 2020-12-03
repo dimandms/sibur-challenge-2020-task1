@@ -1,4 +1,4 @@
-from sklearn.linear_model import ElasticNet, ElasticNetCV
+from sklearn.linear_model import ElasticNet
 from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import make_scorer
@@ -6,25 +6,26 @@ from metrics import mean_absolute_percentage_error
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold
-from sklearn.base import TransformerMixin
+from sklearn.base import TransformerMixin, BaseEstimator
 
 import numpy as np
 import pandas as pd
 
 
-def make_simple_model(shifts):
+def make_simple_model():
     model_pipline = Pipeline([
-        ("shift", ShiftTransformer(shifts)),
+        ("shift", ShiftTransformer()),
         ("scaler", StandardScaler()),
         ("selection", SelectKBest(f_regression)),
-        ("regressor", ElasticNet())
+        ("regressor", ElasticNet(random_state=42))
     ])
 
     params_grid = {
         "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
-        "regressor__l1_ratio": [1],
-        "regressor__fit_intercept": [True],
-        "selection__k": [3],
+        "regressor__l1_ratio": [0, 0.5, 1],
+        "regressor__fit_intercept": [True, False],
+        "selection__k": [1, 3, 5],
+        "shift__shifts": [[175, 185, 195]],
     }
 
     model = GridSearchCV(model_pipline,
@@ -40,8 +41,8 @@ def make_simple_model(shifts):
     return model
 
 
-class ShiftTransformer(TransformerMixin):
-    def __init__(self, shifts):
+class ShiftTransformer(TransformerMixin, BaseEstimator):
+    def __init__(self, shifts=[]):
         self.shifts = shifts
 
     def fit(self, X, y=None):
