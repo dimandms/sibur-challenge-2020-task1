@@ -3,6 +3,7 @@ from constants import TARGET_COLUMNS
 from load_data import load_data
 from processing import process
 from modelling import make_simple_model
+from result_view import show_results
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -22,9 +23,6 @@ def main():
         model = model.fit(X_train, y_train[target])
         trained_models.append(model)
 
-    for t in trained_models:
-        print(t.best_estimator_)
-
     y_fits = []
     y_preds = []
     for m in trained_models:
@@ -41,15 +39,16 @@ def main():
     y_fits_df.columns = [f"{c} fitted" for c in TARGET_COLUMNS]
 
     fits = pd.concat([y_fits_df, y_train], axis=1)
-    fits.plot()
 
     sub = pd.concat(y_preds, axis=1)
     sub.columns = TARGET_COLUMNS
     sub.to_csv(f'submission.csv')
 
-    sub.plot()
-
-    plt.show()
+    if args.verbose:
+        show_results(trained_models)
+        fits.plot()
+        sub.plot()
+        plt.show()
 
 
 if __name__ == "__main__":
