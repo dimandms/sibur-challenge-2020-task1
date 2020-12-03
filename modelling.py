@@ -22,8 +22,8 @@ def make_simple_model():
 
     params_grid = {
         "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
-        "regressor__l1_ratio": [0, 0.5, 1],
-        "regressor__fit_intercept": [True, False],
+        "regressor__l1_ratio": [0, 1],
+        "regressor__fit_intercept": [True],
         "selection__k": [1, 3, 5],
         "shift__shifts": [[175, 185, 195]],
     }

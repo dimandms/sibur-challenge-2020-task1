@@ -8,9 +8,41 @@ def process(data):
     return rcompose(
         clean_outliers,
         fill_na,
+        fill_na_test,
+        smooth_median_test,
         smooth,
         add_specified_features,
     )(data)
+
+
+def fill_na_test(data):
+    X_train, y_train, X_test = data
+
+    def fillna_window_func(x):
+        if np.isnan(x.iloc[-1]):
+            return x.median()
+
+        return x.iloc[-1]
+
+    X_test = X_test.rolling(100, min_periods=1).apply(
+        lambda x: fillna_window_func(x))
+
+    return X_train, y_train, X_test
+
+
+def smooth_median_test(data):
+    X_train, y_train, X_test = data
+
+    def smooth_window_func(x, out_precent=10):
+        if abs(x.iloc[-1] - x.median()) > x.median()*out_precent/100:
+            return x.median()
+
+        return x.iloc[-1]
+
+    X_test = X_test.rolling(100, min_periods=1).apply(
+        lambda x: smooth_window_func(x, 20))
+
+    return X_train, y_train, X_test
 
 
 def clean_outliers(data):
@@ -39,10 +71,8 @@ def fill_na(data):
         method='bfill')  # both directions
     y_train = train_targets.fillna(method='ffill').fillna(
         method='bfill')  # both directions
-    X_test = test_features.fillna(method='ffill')  # just forward direction
-    # X_test = test_features.fillna(method='ffill').fillna(method='bfill') #NOT VALID WITHIN RULES
 
-    return X_train, y_train, X_test
+    return X_train, y_train, test_features
 
 
 def smooth(data):
