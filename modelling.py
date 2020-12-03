@@ -7,26 +7,14 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold
 from sklearn.base import TransformerMixin
-from sklearn.ensemble import StackingRegressor
 
 import numpy as np
 import pandas as pd
 
 
-def make_stacked_model(shifts):
-    estimators = [(f"regressor_{shift}", make_simple_model(shift))
-                  for shift in shifts]
-    final_estimator = ElasticNetCV(
-        alphas=np.logspace(-5, -2, num=3, base=10), l1_ratio=1, random_state=42)
-
-    stacking_regressor = StackingRegressor(
-        estimators=estimators, cv=KFold(n_splits=10, shuffle=True, random_state=42), final_estimator=final_estimator)
-    return stacking_regressor
-
-
-def make_simple_model(shift):
+def make_simple_model(shifts):
     model_pipline = Pipeline([
-        ("shift", ShiftTransformer(shift)),
+        ("shift", ShiftTransformer(shifts)),
         ("scaler", StandardScaler()),
         ("selection", SelectKBest(f_regression)),
         ("regressor", ElasticNet())
@@ -53,8 +41,8 @@ def make_simple_model(shift):
 
 
 class ShiftTransformer(TransformerMixin):
-    def __init__(self, shift_num):
-        self.shift_num = shift_num
+    def __init__(self, shifts):
+        self.shifts = shifts
 
     def fit(self, X, y=None):
         return self
@@ -64,7 +52,8 @@ class ShiftTransformer(TransformerMixin):
 
         for column in df:
             if column.startswith("A"):
-                df[column] = df[column].shift(
-                    self.shift_num, fill_value=df[column][0])
+                for shift in self.shifts:
+                    df[f"{column}_shift_{shift}"] = df[column].shift(
+                        shift, fill_value=df[column][0])
 
         return df
