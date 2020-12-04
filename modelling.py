@@ -1,4 +1,4 @@
-from sklearn.linear_model import ElasticNet
+from sklearn.linear_model import ElasticNet, Ridge
 from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import make_scorer
@@ -18,6 +18,7 @@ def make_simple_model():
         ("scaler", StandardScaler()),
         ("selection", SelectKBest(f_regression)),
         ("regressor", ElasticNet(random_state=42))
+        # ("regressor", Ridge(random_state=42))
     ])
 
     params_grid = {
@@ -25,6 +26,7 @@ def make_simple_model():
         "regressor__l1_ratio": [0, 1],
         "regressor__fit_intercept": [True],
         "selection__k": [1, 3, 5],
+        # "shift__shifts": [list(range(175, 196))],
         "shift__shifts": [[175, 185, 195]],
     }
 

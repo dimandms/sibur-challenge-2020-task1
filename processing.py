@@ -3,6 +3,12 @@ import pandas as pd
 import numpy as np
 from funcy import rcompose
 
+FILL_NA_WINDOW = 100
+SMOOTH_MEDIAN_WINDOW = 100
+SMOOTH_MEDIAN_OUT_PERCENT = 20
+RATE_MINIMAL_VALUE = 20.0
+EWMA_WINDOW = 10
+
 
 def process(data):
     return rcompose(
@@ -24,7 +30,7 @@ def fill_na_test(data):
 
         return x.iloc[-1]
 
-    X_test = X_test.rolling(100, min_periods=1).apply(
+    X_test = X_test.rolling(FILL_NA_WINDOW, min_periods=1).apply(
         lambda x: fillna_window_func(x))
 
     return X_train, y_train, X_test
@@ -39,8 +45,8 @@ def smooth_median_test(data):
 
         return x.iloc[-1]
 
-    X_test = X_test.rolling(100, min_periods=1).apply(
-        lambda x: smooth_window_func(x, 20))
+    X_test = X_test.rolling(SMOOTH_MEDIAN_WINDOW, min_periods=1).apply(
+        lambda x: smooth_window_func(x, SMOOTH_MEDIAN_OUT_PERCENT))
 
     return X_train, y_train, X_test
 
@@ -54,9 +60,8 @@ def clean_outliers(data):
     X_train.loc["2020-01-25 19:00": "2020-02-14 16:30", :] = np.nan
     y_train.loc["2020-01-25 19:00": "2020-02-14 16:30", :] = np.nan
 
-    rate_minimal_value = 20.0
-    clean_mask = (X_train["A_rate"] < rate_minimal_value) | \
-                 (X_train["B_rate"] < rate_minimal_value)
+    clean_mask = (X_train["A_rate"] < RATE_MINIMAL_VALUE) | \
+                 (X_train["B_rate"] < RATE_MINIMAL_VALUE)
 
     X_train[clean_mask] = np.nan
     y_train[clean_mask] = np.nan
@@ -76,11 +81,10 @@ def fill_na(data):
 
 
 def smooth(data):
-    SPAN = 30
     train_features, train_targets, test_features = data
     train_df = pd.concat([train_features, train_targets], axis=1)
     df = pd.concat([train_df, test_features], axis=0).ewm(
-        span=SPAN, min_periods=1).mean()
+        span=EWMA_WINDOW, min_periods=1).mean()
 
     X_train = df[FEATURE_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
     y_train = df[TARGET_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
