@@ -17,7 +17,7 @@ def main():
 
     trained_models = []
     for target in TARGET_COLUMNS:
-        model = make_simple_model()
+        model = make_simple_model(target)
         model = model.fit(X_train, y_train[target])
         trained_models.append(model)
 
