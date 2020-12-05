@@ -38,7 +38,7 @@ def make_simple_model(target):
         ("shift", ShiftTransformer()),
         ("selection", FunctionTransformer(pass_columns(target))),
         ("scaler", StandardScaler()),
-        ("regressor", Ridge())
+        ("regressor", Ridge(random_state=42))
     ])
 
     params_grid = {
