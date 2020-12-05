@@ -7,8 +7,10 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold
 from sklearn.base import TransformerMixin, BaseEstimator
-
 from xgboost import XGBRegressor
+from sklearn.kernel_ridge import KernelRidge
+
+from sklearn.gaussian_process.kernels import ExpSineSquared
 
 import numpy as np
 import pandas as pd
@@ -36,11 +38,15 @@ def make_simple_model(target):
         ("shift", ShiftTransformer()),
         ("selection", FunctionTransformer(pass_columns(target))),
         ("scaler", StandardScaler()),
-        ("regressor", XGBRegressor(random_state=42))
+        ("regressor", Ridge())
     ])
 
     params_grid = {
-        "regressor__n_estimators": [15],
+        # "regressor__n_estimators": [15],
+        "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
+        # "regressor__kernel": [ExpSineSquared(l, p)
+        #                       for l in np.logspace(-2, 2, 10)
+        #                       for p in np.logspace(0, 2, 10)],
         "shift__shifts": [[175, 185, 195]],
     }
     # model_pipline = Pipeline([
