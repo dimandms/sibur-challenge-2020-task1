@@ -10,6 +10,7 @@ from sklearn.base import TransformerMixin, BaseEstimator
 from xgboost import XGBRegressor
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.neural_network import MLPRegressor
+from sklearn.preprocessing import PolynomialFeatures
 
 from sklearn.gaussian_process.kernels import ExpSineSquared
 
@@ -37,12 +38,16 @@ def pass_columns(target):
 def make_simple_model(target):
     model_pipline = Pipeline([
         ("selection", FunctionTransformer(pass_columns(target))),
+        ("polinom", PolynomialFeatures()),
         ("scaler", StandardScaler()),
         ("regressor", Ridge(random_state=42))
     ])
 
     params_grid = {
         "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
+        "polinom__degree": [2],
+        "polinom__interaction_only": [True],
+        "polinom__include_bias": [False],
     }
 
     model = GridSearchCV(model_pipline,
