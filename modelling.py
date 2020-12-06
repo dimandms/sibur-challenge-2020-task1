@@ -9,6 +9,7 @@ from sklearn.model_selection import KFold
 from sklearn.base import TransformerMixin, BaseEstimator
 from xgboost import XGBRegressor
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.neural_network import MLPRegressor
 
 from sklearn.gaussian_process.kernels import ExpSineSquared
 
@@ -37,11 +38,12 @@ def make_simple_model(target):
     model_pipline = Pipeline([
         ("selection", FunctionTransformer(pass_columns(target))),
         ("scaler", StandardScaler()),
-        ("regressor", Ridge(random_state=42))
+        ("regressor", MLPRegressor(random_state=42, max_iter=700, early_stopping=True))
     ])
 
     params_grid = {
-        "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
+        "regressor__hidden_layer_sizes": [(2, 2), (3, 3), (2, 1), (3, 1)],
+        "regressor__alpha": np.logspace(-5, -2, num=4, base=10),
     }
 
     model = GridSearchCV(model_pipline,

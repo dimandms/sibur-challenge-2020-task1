@@ -45,6 +45,9 @@ def main():
 
     if args.verbose:
         show_results(trained_models, fits)
+        for trained_model in trained_models:
+            print(pd.DataFrame(trained_model.cv_results_)[
+                  ['mean_train_score', 'std_train_score', 'mean_test_score', 'std_test_score']])
         fits.plot()
         sub.plot()
         plt.show()
