@@ -38,12 +38,11 @@ def make_simple_model(target):
     model_pipline = Pipeline([
         ("selection", FunctionTransformer(pass_columns(target))),
         ("scaler", StandardScaler()),
-        ("regressor", MLPRegressor(random_state=42, max_iter=700, early_stopping=True))
+        ("regressor", Ridge(random_state=42))
     ])
 
     params_grid = {
-        "regressor__hidden_layer_sizes": [(2, 2), (3, 3), (2, 1), (3, 1)],
-        "regressor__alpha": np.logspace(-5, -2, num=4, base=10),
+        "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
     }
 
     model = GridSearchCV(model_pipline,

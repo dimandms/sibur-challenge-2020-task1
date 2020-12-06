@@ -13,7 +13,7 @@ EWMA_WINDOW = 10
 def process(data):
     return rcompose(
         clean_outliers,
-        fill_na,
+        fill_na_train,
         fill_na_test,
         smooth_median_test,
         smooth,
@@ -93,12 +93,24 @@ def clean_outliers(data):
     return X_train, y_train, X_test
 
 
-def fill_na(data):
+def fill_na_train(data):
     train_features, train_targets, test_features = data
 
-    X_train = train_features.fillna(method='ffill').fillna(
+    def fillna_window_func(x):
+        if np.isnan(x.iloc[-1]):
+            return x.median()
+
+        return x.iloc[-1]
+
+    X_train = train_features.rolling(FILL_NA_WINDOW, min_periods=1).apply(
+        lambda x: fillna_window_func(x))
+
+    y_train = train_targets.rolling(FILL_NA_WINDOW, min_periods=1).apply(
+        lambda x: fillna_window_func(x))
+
+    X_train = X_train.fillna(method='ffill').fillna(
         method='bfill')  # both directions
-    y_train = train_targets.fillna(method='ffill').fillna(
+    y_train = y_train.fillna(method='ffill').fillna(
         method='bfill')  # both directions
 
     return X_train, y_train, test_features
