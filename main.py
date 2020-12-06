@@ -27,7 +27,7 @@ def main():
         result = m.predict(X)
         result_df = pd.DataFrame(result, index=X.index)
 
-        y_fitted = result_df.loc["2020-03-01 00:00:00":"2020-04-30 23:30:00", :]
+        y_fitted = result_df.loc[:"2020-04-30 23:30:00", :]
         y_pred = result_df.loc["2020-05-01 00:00:00":"2020-07-22 23:30:00", :]
 
         y_fits.append(y_fitted)
@@ -37,7 +37,7 @@ def main():
     y_fits_df.columns = [f"{c}_fitted" for c in TARGET_COLUMNS]
 
     fits = pd.concat(
-        [y_fits_df, y_train.loc["2020-03-01 00:00:00":, :]], axis=1)
+        [y_fits_df, y_train.loc[:"2020-04-30 23:30:00":, :]], axis=1)
 
     sub = pd.concat(y_preds, axis=1)
     sub.columns = TARGET_COLUMNS
