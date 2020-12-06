@@ -27,7 +27,6 @@ def main():
         result = m.predict(X)
         result_df = pd.DataFrame(result, index=X.index)
 
-        # y_fitted = result_df.loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
         y_fitted = result_df.loc["2020-03-01 00:00:00":"2020-04-30 23:30:00", :]
         y_pred = result_df.loc["2020-05-01 00:00:00":"2020-07-22 23:30:00", :]
 

@@ -18,7 +18,31 @@ def process(data):
         smooth_median_test,
         smooth,
         add_specified_features,
+        generate_shifts,
     )(data)
+
+
+def generate_shifts(data):
+    SHIFTS = [175, 185, 195]
+    train_features, train_targets, test_features = data
+    train_df = pd.concat([train_features, train_targets], axis=1)
+    df = pd.concat([train_df, test_features], axis=0)
+
+    for column in df:
+        if column.startswith("A"):
+            for shift in SHIFTS:
+                df[f"{column}_shift_{shift}"] = df[column].shift(shift)
+
+    FEATURE_COLUMNS_NEW = [
+        column for column in df if column.startswith("A")] + ['B_rate']
+
+    X_test = df[FEATURE_COLUMNS_NEW].loc["2020-05-01 00:00:00":"2020-07-22 23:30:00", :]
+
+    df = df.dropna()
+    X_train = df[FEATURE_COLUMNS_NEW].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
+    y_train = df[TARGET_COLUMNS].loc["2020-01-01 00:00:00":"2020-04-30 23:30:00", :]
+
+    return X_train, y_train, X_test
 
 
 def fill_na_test(data):

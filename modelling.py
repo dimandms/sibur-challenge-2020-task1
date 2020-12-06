@@ -35,36 +35,14 @@ def pass_columns(target):
 
 def make_simple_model(target):
     model_pipline = Pipeline([
-        ("shift", ShiftTransformer()),
         ("selection", FunctionTransformer(pass_columns(target))),
         ("scaler", StandardScaler()),
         ("regressor", Ridge(random_state=42))
     ])
 
     params_grid = {
-        # "regressor__n_estimators": [15],
         "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
-        # "regressor__kernel": [ExpSineSquared(l, p)
-        #                       for l in np.logspace(-2, 2, 10)
-        #                       for p in np.logspace(0, 2, 10)],
-        "shift__shifts": [[175, 185, 195]],
     }
-    # model_pipline = Pipeline([
-    #     ("shift", ShiftTransformer()),
-    #     ("scaler", StandardScaler()),
-    #     ("selection", SelectKBest(f_regression)),
-    #     ("regressor", ElasticNet(random_state=42))
-    #     # ("regressor", Ridge(random_state=42))
-    # ])
-
-    # params_grid = {
-    #     "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
-    #     "regressor__l1_ratio": [0, 1],
-    #     "regressor__fit_intercept": [True],
-    #     "selection__k": [1, 3, 5],
-    #     # "shift__shifts": [list(range(175, 196))],
-    #     "shift__shifts": [[175, 185, 195]],
-    # }
 
     model = GridSearchCV(model_pipline,
                          params_grid,
@@ -77,22 +55,3 @@ def make_simple_model(target):
                          )
 
     return model
-
-
-class ShiftTransformer(TransformerMixin, BaseEstimator):
-    def __init__(self, shifts=[]):
-        self.shifts = shifts
-
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        df = X.copy()
-
-        for column in df:
-            if column.startswith("A"):
-                for shift in self.shifts:
-                    df[f"{column}_shift_{shift}"] = df[column].shift(
-                        shift, fill_value=df[column][0])
-
-        return df
