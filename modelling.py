@@ -1,9 +1,9 @@
 from sklearn.linear_model import ElasticNet, Ridge
-from sklearn.feature_selection import SelectKBest, f_regression
+from sklearn.feature_selection import SelectKBest, f_regression, mutual_info_regression
 from sklearn.preprocessing import StandardScaler, FunctionTransformer
 from sklearn.metrics import make_scorer
 from metrics import mean_absolute_percentage_error
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold
 from sklearn.base import TransformerMixin, BaseEstimator
@@ -38,16 +38,20 @@ def pass_columns(target):
 def make_simple_model(target):
     model_pipline = Pipeline([
         ("selection", FunctionTransformer(pass_columns(target))),
-        ("polinom", PolynomialFeatures()),
+        # ("polinom", PolynomialFeatures()),
+        # ("kbest", SelectKBest(mutual_info_regression)),
         ("scaler", StandardScaler()),
-        ("regressor", Ridge(random_state=42))
+        # ("regressor", Ridge(random_state=42)),
+        ("nn", MLPRegressor(random_state=42, learning_rate="adaptive", max_iter=2000)),
     ])
 
     params_grid = {
-        "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
-        "polinom__degree": [2],
-        "polinom__interaction_only": [True],
-        "polinom__include_bias": [False],
+        # "regressor__alpha": np.logspace(-5, -2, num=4, base=10),
+        # "polinom__degree": [1, 2],
+        # "polinom__interaction_only": [False],
+        # "polinom__include_bias": [False],
+        # "kbest__k": [6, "all"],
+        "nn__hidden_layer_sizes": [(256, ), (256, 256), (32, ), (32, 32), (128, ), (128, 128)]
     }
 
     model = GridSearchCV(model_pipline,
@@ -55,9 +59,11 @@ def make_simple_model(target):
                          scoring=make_scorer(
                              mean_absolute_percentage_error, greater_is_better=False),
                          n_jobs=-1,
-                         cv=KFold(n_splits=10, shuffle=True, random_state=42),
+                         #  cv=TimeSeriesSplit(n_splits=10),
+                         cv=KFold(n_splits=5, shuffle=True, random_state=42),
                          refit=True,
-                         return_train_score=True
+                         return_train_score=True,
+                         verbose=10
                          )
 
     return model
