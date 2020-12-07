@@ -1,16 +1,14 @@
-from args import parse_args
 from constants import TARGET_COLUMNS
 from load_data import load_data
 from processing import process
 from modelling import make_simple_model
-from result_view import show_results
+from results_view import show_results
 
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
 def main():
-    args = parse_args()
     loaded_data = load_data()
     (X_train, y_train, X_test) = process(loaded_data)
     X = pd.concat([X_train, X_test])
@@ -43,14 +41,13 @@ def main():
     sub.columns = TARGET_COLUMNS
     sub.to_csv(f'submission.csv')
 
-    if args.verbose:
-        show_results(trained_models, fits)
-        for trained_model in trained_models:
-            print(pd.DataFrame(trained_model.cv_results_)[
-                  ['mean_train_score', 'std_train_score', 'mean_test_score', 'std_test_score']])
-        fits.plot()
-        sub.plot()
-        plt.show()
+    show_results(trained_models, fits)
+    for trained_model in trained_models:
+        print(pd.DataFrame(trained_model.cv_results_)[
+            ['mean_train_score', 'std_train_score', 'mean_test_score', 'std_test_score']])
+    fits.plot()
+    sub.plot()
+    plt.show()
 
 
 if __name__ == "__main__":

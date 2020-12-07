@@ -20,16 +20,11 @@ import pandas as pd
 
 def pass_columns(target):
     target_gas = target[2:]
-    features = [
-        f"A_{target_gas}_shift_175",
-        f"A_{target_gas}_shift_185",
-        f"A_{target_gas}_shift_195",
-        "A_rate_shift_175",
-        "A_rate_shift_185",
-        "A_rate_shift_195",
-    ]
 
     def filter(X):
+        features = [
+            column for column in X if f"{target_gas}_shift" in column or "A_rate_shift" in column]
+        # print(f"{target_gas}, features: {features}")
         return X[features]
 
     return filter
@@ -42,16 +37,18 @@ def make_simple_model(target):
         # ("kbest", SelectKBest(mutual_info_regression)),
         ("scaler", StandardScaler()),
         # ("regressor", Ridge(random_state=42)),
-        ("nn", MLPRegressor(random_state=42, learning_rate="adaptive", max_iter=2000)),
+        ("nn", MLPRegressor(random_state=42, learning_rate="adaptive", max_iter=1000)),
     ])
 
     params_grid = {
         # "regressor__alpha": np.logspace(-5, -2, num=4, base=10),
         "polinom__degree": [1, 2],
-        "polinom__interaction_only": [True, False],
+        # "polinom__degree": [1],
+        "polinom__interaction_only": [False],
         "polinom__include_bias": [False],
         # "kbest__k": [6, "all"],
-        "nn__hidden_layer_sizes": [(32, ), (32, 32), (32, 32, 32), (256, ), (256, 256),  (256, 256, 256)]
+        "nn__hidden_layer_sizes": [(256, ), (256, 256), (32, ), (32, 32), (128, ), (128, 128)]
+        # "nn__hidden_layer_sizes": [(256, 256)]
     }
 
     model = GridSearchCV(model_pipline,
