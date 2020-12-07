@@ -50,12 +50,15 @@ def fill_na_test(data):
 
     def fillna_window_func(x):
         if np.isnan(x.iloc[-1]):
-            return x.median()
+            if not np.isnan(x.iloc[-2]):
+                return x.median()
 
         return x.iloc[-1]
 
     X_test = X_test.rolling(FILL_NA_WINDOW, min_periods=1).apply(
         lambda x: fillna_window_func(x))
+
+    X_test = X_test.fillna(method='ffill')
 
     return X_train, y_train, X_test
 
@@ -98,7 +101,8 @@ def fill_na_train(data):
 
     def fillna_window_func(x):
         if np.isnan(x.iloc[-1]):
-            return x.median()
+            if not np.isnan(x.iloc[-2]):
+                return x.median()
 
         return x.iloc[-1]
 

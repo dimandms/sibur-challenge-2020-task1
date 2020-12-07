@@ -42,12 +42,12 @@ def make_simple_model(target):
 
     params_grid = {
         # "regressor__alpha": np.logspace(-5, -2, num=4, base=10),
-        "polinom__degree": [1, 2],
-        # "polinom__degree": [1],
+        # "polinom__degree": [1, 2],
+        "polinom__degree": [1],
         "polinom__interaction_only": [False],
         "polinom__include_bias": [False],
         # "kbest__k": [6, "all"],
-        "nn__hidden_layer_sizes": [(256, ), (256, 256), (32, ), (32, 32), (128, ), (128, 128)]
+        "nn__hidden_layer_sizes": [(1,)]
         # "nn__hidden_layer_sizes": [(256, 256)]
     }
 
