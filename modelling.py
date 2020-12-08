@@ -1,36 +1,54 @@
-from sklearn.linear_model import ElasticNet
-from sklearn.neural_network import MLPRegressor
-from sklearn.feature_selection import SelectKBest, f_regression
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import PowerTransformer
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import ElasticNet, Ridge
+from sklearn.feature_selection import SelectKBest, f_regression, mutual_info_regression
+from sklearn.preprocessing import StandardScaler, FunctionTransformer
 from sklearn.metrics import make_scorer
-from metrics import mean_absolute_percentage_error, absolute_errors
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from metrics import mean_absolute_percentage_error
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold
-from sklearn.decomposition import PCA
-
+from sklearn.base import TransformerMixin, BaseEstimator
 from xgboost import XGBRegressor
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.neural_network import MLPRegressor
+from sklearn.preprocessing import PolynomialFeatures
+
+from sklearn.gaussian_process.kernels import ExpSineSquared
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
-from constants import TARGET_COLUMNS
 
 
-def train_regression(X_train, y_train):
+def pass_columns(target):
+    target_gas = target[2:]
+
+    def filter(X):
+        features = [
+            column for column in X if f"{target_gas}_shift" in column or "A_rate_shift" in column]
+        # print(f"{target_gas}, features: {features}")
+        return X[features]
+
+    return filter
+
+
+def make_simple_model(target):
     model_pipline = Pipeline([
+        ("selection", FunctionTransformer(pass_columns(target))),
+        ("polinom", PolynomialFeatures()),
+        # ("kbest", SelectKBest(mutual_info_regression)),
         ("scaler", StandardScaler()),
-        ("regressor", ElasticNet())
+        # ("regressor", Ridge(random_state=42)),
+        ("nn", MLPRegressor(random_state=42, learning_rate="adaptive", max_iter=1000)),
     ])
 
+    # params_grid = {
+    #     "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
+    # }
+
     params_grid = {
-        "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
-        "regressor__l1_ratio": [0, 1],
-        "regressor__fit_intercept": [True],
+        "polinom__degree": [1],
+        "polinom__interaction_only": [False],
+        "polinom__include_bias": [False],
+        "nn__hidden_layer_sizes": [(128, 128), (256, 256), (256, 128), (128, 64)]
     }
 
     model = GridSearchCV(model_pipline,
@@ -38,20 +56,11 @@ def train_regression(X_train, y_train):
                          scoring=make_scorer(
                              mean_absolute_percentage_error, greater_is_better=False),
                          n_jobs=-1,
-                         cv=KFold(n_splits=10, shuffle=True, random_state=42),
+                         #  cv=TimeSeriesSplit(n_splits=10),
+                         cv=KFold(n_splits=5, shuffle=True, random_state=42),
                          refit=True,
-                         return_train_score=True
+                         return_train_score=True,
+                         verbose=10
                          )
 
-    model.fit(X_train, y_train)
-
     return model
-
-
-def evaluate_training(X_train, y_train):
-    models = []
-    for target in TARGET_COLUMNS:
-        result = train_regression(X_train, y_train[target])
-        models.append(result)
-
-    return models

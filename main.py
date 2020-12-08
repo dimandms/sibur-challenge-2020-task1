@@ -1,58 +1,55 @@
 from constants import TARGET_COLUMNS
-import pickle
-from args import parse_args
-
 from load_data import load_data
 from processing import process
-from modelling import evaluate_training
-from submission import create_submission, create_smoothed_submission
-from evaluate import predict
-from result_view import show_results
+from modelling import make_simple_model
+from results_view import show_results
 
+import pandas as pd
 import matplotlib.pyplot as plt
 
 
 def main():
-    args = parse_args()
+    loaded_data = load_data()
+    (X_train, y_train, X_test) = process(loaded_data)
+    X = pd.concat([X_train, X_test])
 
-    train_features, train_targets, test_features = process(load_data())
-    models = evaluate_training(train_features, train_targets)
-    if args.verbose:
-        show_results(models)
+    trained_models = []
+    for target in TARGET_COLUMNS:
+        print("--------------Train {target}--------------")
+        model = make_simple_model(target)
+        model = model.fit(X_train, y_train[target])
+        trained_models.append(model)
 
-    with open('results.pickle', 'wb') as f:
-        pickle.dump(models, f)
+    y_fits = []
+    y_preds = []
+    for m in trained_models:
+        result = m.predict(X)
+        result_df = pd.DataFrame(result, index=X.index)
 
-    estimators = [model.best_estimator_ for model in models]
+        y_fitted = result_df.loc[:"2020-04-30 23:30:00", :]
+        y_pred = result_df.loc["2020-05-01 00:00:00":"2020-07-22 23:30:00", :]
 
-    # -----
-    _, axes = plt.subplots(4, 1, figsize=(15, 8))
-    for target, ax, pred in zip(TARGET_COLUMNS, axes, [pred for pred in predict(estimators, train_features)]):
-        ax.plot(train_targets[target].values, label=f"true_{target}")
-        ax.plot(pred, label=f"pred_{target}")
-        ax.legend()
+        y_fits.append(y_fitted)
+        y_preds.append(y_pred)
+
+    y_fits_df = pd.concat(y_fits, axis=1)
+    y_fits_df.columns = [f"{c}_fitted" for c in TARGET_COLUMNS]
+
+    fits = pd.concat(
+        [y_fits_df, y_train.loc[:"2020-04-30 23:30:00":, :]], axis=1)
+
+    sub = pd.concat(y_preds, axis=1)
+    sub.columns = TARGET_COLUMNS
+    sub.to_csv(f'submission.csv')
+
+    show_results(trained_models, fits)
+    for trained_model in trained_models:
+        print(pd.DataFrame(trained_model.cv_results_)[
+            ['mean_train_score', 'std_train_score', 'mean_test_score', 'std_test_score']])
+    fits.plot()
+    sub.plot()
     plt.show()
-    # -----
-
-    y_preds = [pred for pred in predict(estimators, test_features)]
-
-    sub = create_submission(test_features.index.values, y_preds)
-    sub_smoothed = create_smoothed_submission(
-        test_features.index.values, y_preds)
-
-    sub.to_csv(f'submission.csv', index=False)
-    sub_smoothed.to_csv(f'submission_smoothed.csv', index=False)
 
 
 if __name__ == "__main__":
     main()
-
-"""1. Сделать преобразование в т/с и отбросить общие расходы. Потом восстанавливать проценты
-2. Ridge тренировать на r2
-3. Сделать полиномальные фичи
-4. Бустинг
-5. Своя стратегия cv
-6. Зафиксировать random seed
-7. построить модели для B_C2H6_mass и B_C3H8_mass. Модели B_iC4H10_mass	B_nC4H10_mass делать через корелляцию с B_C3H8_mass
-8. Смещение по времени?
-"""
