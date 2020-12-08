@@ -33,22 +33,23 @@ def pass_columns(target):
 def make_simple_model(target):
     model_pipline = Pipeline([
         ("selection", FunctionTransformer(pass_columns(target))),
-        # ("polinom", PolynomialFeatures()),
+        ("polinom", PolynomialFeatures()),
         # ("kbest", SelectKBest(mutual_info_regression)),
         ("scaler", StandardScaler()),
-        ("regressor", Ridge(random_state=42)),
-        # ("nn", MLPRegressor(random_state=42, learning_rate="adaptive", max_iter=1000)),
+        # ("regressor", Ridge(random_state=42)),
+        ("nn", MLPRegressor(random_state=42, learning_rate="adaptive", max_iter=1000)),
     ])
 
-    params_grid = {
-        "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
-    }
     # params_grid = {
-    #     "polinom__degree": [1],
-    #     "polinom__interaction_only": [False],
-    #     "polinom__include_bias": [False],
-    #     "nn__hidden_layer_sizes": [(32, 32)]
+    #     "regressor__alpha": np.logspace(-8, -2, num=7, base=10),
     # }
+
+    params_grid = {
+        "polinom__degree": [1],
+        "polinom__interaction_only": [False],
+        "polinom__include_bias": [False],
+        "nn__hidden_layer_sizes": [(32, 32), (64, 64), (128, 128), (256, 256)]
+    }
 
     model = GridSearchCV(model_pipline,
                          params_grid,
