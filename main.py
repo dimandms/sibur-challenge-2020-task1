@@ -15,6 +15,7 @@ def main():
 
     trained_models = []
     for target in TARGET_COLUMNS:
+        print("--------------Train {target}--------------")
         model = make_simple_model(target)
         model = model.fit(X_train, y_train[target])
         trained_models.append(model)
