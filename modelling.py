@@ -48,7 +48,7 @@ def make_simple_model(target):
         "polinom__degree": [1],
         "polinom__interaction_only": [False],
         "polinom__include_bias": [False],
-        "nn__hidden_layer_sizes": [(32, 32), (64, 64), (128, 128), (256, 256)]
+        "nn__hidden_layer_sizes": [(128, 128), (256, 256), (256, 128), (128, 64)]
     }
 
     model = GridSearchCV(model_pipline,
