@@ -50,17 +50,12 @@ def fill_na_test(data):
 
     def fillna_window_func(x):
         if np.isnan(x.iloc[-1]):
-            if np.isnan(x.iloc[-2]):
-                return np.nan
-            else:
-                return x.iloc[:-2].median()
+            return x.median()
 
         return x.iloc[-1]
 
     X_test = X_test.rolling(FILL_NA_WINDOW, min_periods=1).apply(
         lambda x: fillna_window_func(x))
-
-    # X_test = X_test.fillna(method='ffill')
 
     return X_train, y_train, X_test
 
@@ -70,17 +65,12 @@ def smooth_median_test(data):
 
     def smooth_window_func(x, out_precent=10):
         if abs(x.iloc[-1] - x.median()) > x.median()*out_precent/100:
-            return x.iloc[:-2].median()
+            return x.median()
 
         return x.iloc[-1]
 
-    for column in X_test:
-        if column == "A_C3H8":
-            X_test[column] = X_test[column].rolling(100, min_periods=5).apply(
-                lambda x: smooth_window_func(x, 1))
-        else:
-            X_test[column] = X_test[column].rolling(SMOOTH_MEDIAN_WINDOW, min_periods=1).apply(
-                lambda x: smooth_window_func(x, SMOOTH_MEDIAN_OUT_PERCENT))
+    X_test = X_test.rolling(SMOOTH_MEDIAN_WINDOW, min_periods=1).apply(
+        lambda x: smooth_window_func(x, SMOOTH_MEDIAN_OUT_PERCENT))
 
     return X_train, y_train, X_test
 
@@ -108,8 +98,7 @@ def fill_na_train(data):
 
     def fillna_window_func(x):
         if np.isnan(x.iloc[-1]):
-            if not np.isnan(x.iloc[-2]):
-                return x.median()
+            return x.median()
 
         return x.iloc[-1]
 
