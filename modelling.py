@@ -1,21 +1,12 @@
-from sklearn.linear_model import ElasticNet, Ridge
-from sklearn.feature_selection import SelectKBest, f_regression
+from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler, FunctionTransformer
 from sklearn.metrics import make_scorer
 from metrics import mean_absolute_percentage_error
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold
-from sklearn.base import TransformerMixin, BaseEstimator
-from xgboost import XGBRegressor
-from sklearn.kernel_ridge import KernelRidge
-from sklearn.neural_network import MLPRegressor
-
-from sklearn.gaussian_process.kernels import ExpSineSquared
 
 import numpy as np
-import pandas as pd
-
 
 def pass_columns(target):
     target_gas = target[2:]
